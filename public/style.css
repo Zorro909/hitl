@@ -1,0 +1,57 @@
+.field-group {
+  margin: 1rem 0;
+}
+
+.approve-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.approve-label {
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.approve-btn,
+.reject-btn {
+  padding: 0.4rem 1.2rem;
+  border: 2px solid;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  background: transparent;
+  width: auto;
+}
+
+.approve-btn {
+  border-color: #2e7d32;
+  color: #2e7d32;
+}
+
+.approve-btn.selected {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.reject-btn {
+  border-color: #c62828;
+  color: #c62828;
+}
+
+.reject-btn.selected {
+  background: #c62828;
+  color: #fff;
+}
+
+fieldset.field-group {
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+}
+
+fieldset.field-group label {
+  display: block;
+  margin-bottom: 0.25rem;
+}

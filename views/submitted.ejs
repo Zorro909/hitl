@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Submitted</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="container">
+    <article>
+      <% if (alreadySubmitted) { %>
+        <h2>Already Submitted</h2>
+        <p>This page has already been submitted. Your previous responses have been recorded.</p>
+      <% } else { %>
+        <h2>Thank You</h2>
+        <p>Your responses have been submitted successfully.</p>
+      <% } %>
+    </article>
+  </main>
+</body>
+</html>

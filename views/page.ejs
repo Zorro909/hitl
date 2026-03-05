@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="container">
+    <% if (status === 'responded') { %>
+      <article>
+        <p>This page has already been submitted.</p>
+      </article>
+    <% } else { %>
+      <form action="/p/<%= pageId %>/submit" method="POST">
+        <%- html %>
+        <button type="submit">Submit</button>
+      </form>
+    <% } %>
+  </main>
+  <script>
+    function setApproval(btn) {
+      const field = btn.dataset.field;
+      const value = btn.dataset.value;
+      const hidden = document.querySelector('input[name="' + field + '"]');
+      hidden.value = value;
+      // Highlight selected button
+      const group = btn.closest('.approve-group');
+      group.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+  </script>
+</body>
+</html>
