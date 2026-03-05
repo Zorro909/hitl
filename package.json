@@ -1,10 +1,11 @@
 {
   "name": "hitl",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Human-in-the-Loop page system for AI agent workflows",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "DB_PATH=:memory: node --test test/*.test.js"
   },
   "keywords": [],
   "author": "",
@@ -15,5 +16,8 @@
     "express": "^5.2.1",
     "marked": "^17.0.3",
     "nanoid": "^3.3.11"
+  },
+  "devDependencies": {
+    "supertest": "^7.2.2"
   }
 }
