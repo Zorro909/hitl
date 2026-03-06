@@ -44,6 +44,24 @@ router.post('/p/:id/submit', express.urlencoded({ extended: true }), (req, res) 
   }
 
   saveResponses(page.id, responses);
+
+  if (page.callback_url) {
+    const updatedPage = getPage(page.id);
+    fetch(page.callback_url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: updatedPage.id,
+        status: updatedPage.status,
+        responses,
+        responded_at: updatedPage.responded_at,
+      }),
+      signal: AbortSignal.timeout(5000),
+    }).catch((err) => {
+      console.error(`Webhook callback failed for page ${page.id}:`, err.message);
+    });
+  }
+
   res.render('submitted', { title: page.title || 'HITL Page', alreadySubmitted: false });
 });
 
