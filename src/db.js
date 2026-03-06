@@ -11,6 +11,7 @@ db.exec(`
     id TEXT PRIMARY KEY,
     title TEXT,
     content TEXT NOT NULL,
+    callback_url TEXT,
     status TEXT DEFAULT 'waiting',
     responses TEXT,
     created_at TEXT DEFAULT (datetime('now')),
@@ -18,9 +19,16 @@ db.exec(`
   )
 `);
 
-function createPage(id, title, content) {
-  const stmt = db.prepare('INSERT INTO pages (id, title, content) VALUES (?, ?, ?)');
-  stmt.run(id, title || null, content);
+// Migration: add callback_url column to existing databases
+try {
+  db.exec('ALTER TABLE pages ADD COLUMN callback_url TEXT');
+} catch (e) {
+  // Column already exists — ignore
+}
+
+function createPage(id, title, content, callbackUrl) {
+  const stmt = db.prepare('INSERT INTO pages (id, title, content, callback_url) VALUES (?, ?, ?, ?)');
+  stmt.run(id, title || null, content, callbackUrl || null);
   return getPage(id);
 }
 
