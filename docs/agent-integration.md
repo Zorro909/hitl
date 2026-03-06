@@ -10,14 +10,44 @@ This guide covers the complete workflow for integrating HITL into an AI agent, w
 
 ## End-to-End Workflow
 
-1. **Create a page** — POST Markdown content (with annotation fields) to the API server. The response includes a page ID and a human-facing URL.
+1. **Create a page** — POST Markdown content (with annotation fields) to the API server. The response includes a page ID and a human-facing URL. Optionally include a `callback_url` for async notifications.
 2. **Present the URL to the human** — send it via chat, email, Slack notification, or open it programmatically.
-3. **Poll for response** — GET the page status from the API. Repeat until `status` changes from `"waiting"` to `"responded"`.
+3. **Wait for response** — either poll `GET /api/pages/:id`, or receive a webhook callback at the `callback_url` you provided.
 4. **Process the response** — read the `responses` object and act on the human's input.
+
+## Webhook Callbacks (recommended)
+
+Instead of polling, provide a `callback_url` when creating a page. When the human submits, HITL POSTs the response to your URL automatically.
+
+- **Fire-and-forget**: The callback never blocks the human's submission
+- **Single attempt**: No retries. 5-second timeout
+- **Backwards-compatible**: Polling still works alongside callbacks
+
+```bash
+# Create page with callback
+curl -s -X POST http://localhost:3000/api/pages \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Review",
+    "content": "{{approve:ok|label=Approve?}}",
+    "callback_url": "https://hooks.example.com/api/webhooks/whk_abc123"
+  }'
+```
+
+The callback payload:
+
+```json
+{
+  "id": "aBcDeFgHiJ",
+  "status": "responded",
+  "responses": { "ok": "approved" },
+  "responded_at": "2025-01-15 10:32:45"
+}
+```
 
 ## Polling Pattern
 
-HITL uses a simple poll-based model. There are no webhooks or WebSocket connections.
+Polling is still supported as a fallback or alternative to callbacks.
 
 - Poll at intervals of 2–5 seconds
 - Check the `status` field: `"waiting"` means keep polling, `"responded"` means the human has submitted
@@ -136,12 +166,17 @@ Example response object for a page with multiple field types:
 | Invalid page ID when polling | `404` | `{"error": "page not found"}` | Verify the page ID. IDs are case-sensitive 10-character strings. |
 | Human never responds | — | Status stays `"waiting"` | Implement a polling timeout. After the timeout, treat the page as abandoned and proceed with a fallback action. |
 
+## Context Retrieval
+
+If an agent loses context (e.g., after a context window reset), use `GET /api/pages/:id/full` to retrieve the original page title and content alongside the responses.
+
 ## Best Practices
 
+- Use `callback_url` instead of polling when possible — it's more efficient and non-blocking.
 - Use descriptive `title` values so humans can identify the page purpose at a glance.
 - Use meaningful field names that describe the data being collected (e.g., `deploy_approval` instead of `field1`).
 - Keep content concise — humans should be able to respond in under a minute.
-- Set a polling timeout (e.g., 5–10 minutes) — don't poll indefinitely.
+- If polling, set a timeout (e.g., 5–10 minutes) — don't poll indefinitely.
 - Poll at 2–5 second intervals — more frequent polling adds no benefit.
 - Use `approve` fields for binary decisions, `select` for choosing among options.
 - Use `multiline=true` for text fields that expect detailed responses.

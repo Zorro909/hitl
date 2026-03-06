@@ -27,13 +27,15 @@ Create a new interactive page.
 |-------|------|----------|-------------|
 | `content` | string | Yes | Markdown content with optional annotation fields (see [Annotation Syntax](annotation-syntax)) |
 | `title` | string | No | Page title displayed in the browser tab and page header |
+| `callback_url` | string | No | HTTP or HTTPS URL to POST responses to when the human submits. Enables webhook-style notifications instead of polling. |
 
 ### Request Example
 
 ```json
 {
   "title": "Code Review",
-  "content": "## PR #42: Add login page\n\nPlease review the changes.\n\n{{approve:review|label=Approve this PR?}}\n\n{{text:comments|placeholder=Leave comments...|multiline=true}}"
+  "content": "## PR #42: Add login page\n\nPlease review the changes.\n\n{{approve:review|label=Approve this PR?}}\n\n{{text:comments|placeholder=Leave comments...|multiline=true}}",
+  "callback_url": "https://hooks.example.com/api/webhooks/whk_abc123"
 }
 ```
 
@@ -60,6 +62,27 @@ Create a new interactive page.
 | Status | Body | Cause |
 |--------|------|-------|
 | `400` | `{"error": "content is required and must be a string"}` | Missing `content` field, or `content` is not a string |
+| `400` | `{"error": "callback_url must be a valid HTTP or HTTPS URL"}` | `callback_url` is not a valid HTTP/HTTPS URL |
+
+### Callback Behavior
+
+When `callback_url` is provided and the human submits the form, HITL will POST the response to the callback URL:
+
+```
+POST {callback_url}
+Content-Type: application/json
+
+{
+  "id": "aBcDeFgHiJ",
+  "status": "responded",
+  "responses": { "review": "approved", "comments": "LGTM" },
+  "responded_at": "2025-01-15 10:32:45"
+}
+```
+
+- **Fire-and-forget**: The callback never blocks the human's submission. If the callback fails, the submission still succeeds.
+- **Single attempt**: No retries. 5-second timeout.
+- **Double-submit safe**: The callback only fires on the first submission.
 
 ---
 
@@ -111,6 +134,54 @@ Retrieve page status and responses. This is the endpoint agents poll to check wh
 | `responses` | object \| null | `null` if waiting. When responded: object with field names as keys and submitted values as values. Checkbox fields return arrays of selected values. |
 | `created_at` | string | ISO-ish datetime when the page was created |
 | `responded_at` | string \| null | Datetime when the human submitted, or `null` |
+
+### Errors
+
+| Status | Body | Cause |
+|--------|------|-------|
+| `404` | `{"error": "page not found"}` | No page exists with this ID |
+
+---
+
+## GET /api/pages/:id/full
+
+Retrieve full page data including title and content. Use this when an agent needs to re-read the original page content (e.g., after a context window reset).
+
+**Server**: API server (port 3000)
+
+### Path Parameters
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `id` | string | The page ID returned by `POST /api/pages` |
+
+### Response `200 OK`
+
+```json
+{
+  "id": "aBcDeFgHiJ",
+  "title": "Code Review",
+  "content": "## PR #42: Add login page\n\n{{approve:review|label=Approve this PR?}}",
+  "status": "responded",
+  "responses": {
+    "review": "approved"
+  },
+  "created_at": "2025-01-15 10:30:00",
+  "responded_at": "2025-01-15 10:32:45"
+}
+```
+
+### Response Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Page identifier |
+| `title` | string \| null | Page title |
+| `content` | string | Original Markdown content with annotations |
+| `status` | string | `"waiting"` or `"responded"` |
+| `responses` | object \| null | Submitted responses or `null` |
+| `created_at` | string | Creation datetime |
+| `responded_at` | string \| null | Submission datetime or `null` |
 
 ### Errors
 
