@@ -11,7 +11,12 @@ router.post('/api/pages', express.json(), (req, res) => {
   }
 
   if (callback_url != null) {
-    if (typeof callback_url !== 'string' || !/^https?:\/\/.+/.test(callback_url)) {
+    try {
+      const parsed = new URL(typeof callback_url === 'string' ? callback_url : '');
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        throw new Error('bad protocol');
+      }
+    } catch {
       return res.status(400).json({ error: 'callback_url must be a valid HTTP or HTTPS URL' });
     }
   }
